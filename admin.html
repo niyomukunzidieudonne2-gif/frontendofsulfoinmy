@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="rw">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sulfo | Admin Management</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com" rel="stylesheet">
+    <style> body { font-family: 'Plus Jakarta Sans', sans-serif; } </style>
+</head>
+<body class="bg-slate-100 flex min-h-screen">
+
+    <!-- SIDEBAR -->
+    <div class="w-64 bg-blue-900 text-white p-6 hidden md:block">
+        <div class="text-2xl font-black italic mb-10">SULFO <span class="text-yellow-400">ADMIN</span></div>
+        <nav class="space-y-4">
+            <a href="#" class="block p-3 bg-blue-800 rounded-xl font-bold">📦 Stock Management</a>
+            <a href="#" class="block p-3 hover:bg-blue-800 rounded-xl opacity-70">💰 Orders (Amafaranga)</a>
+            <a href="#" class="block p-3 hover:bg-blue-800 rounded-xl opacity-70">👥 Customers</a>
+        </nav>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <main class="flex-1 p-6 md:p-10">
+        <header class="flex justify-between items-center mb-10">
+            <h1 class="text-3xl font-black text-slate-800 italic">Dashboard Control</h1>
+            <div class="bg-white px-4 py-2 rounded-xl shadow-sm font-bold text-blue-800 border">Server: Online 🟢</div>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-10">
+            
+            <!-- LEFT: ADD PRODUCT FORM -->
+            <div class="lg:col-span-1">
+                <div class="bg-white p-8 rounded-[30px] shadow-sm border border-slate-200">
+                    <h2 class="text-xl font-black mb-6 text-blue-900">+ Ongeramo Igicuruzwa</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="text-sm font-bold text-slate-500">Izina ry'igicuruzwa</label>
+                            <input type="text" id="p-name" placeholder="Urugero: Nil Soap 1kg" class="w-full bg-slate-50 border p-4 rounded-2xl outline-none focus:ring-2 ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="text-sm font-bold text-slate-500">Igiciro (RWF)</label>
+                            <input type="number" id="p-price" placeholder="Urugero: 1200" class="w-full bg-slate-50 border p-4 rounded-2xl outline-none focus:ring-2 ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="text-sm font-bold text-slate-500">Link y'ifoto (URL)</label>
+                            <input type="text" id="p-img" placeholder="https://..." class="w-full bg-slate-50 border p-4 rounded-2xl outline-none focus:ring-2 ring-blue-500">
+                        </div>
+                        <button onclick="addProduct()" class="w-full bg-blue-800 text-white p-5 rounded-2xl font-black text-lg hover:bg-blue-900 transition shadow-lg">EMEZA MURI STOCK</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIGHT: STOCK LIST -->
+            <div class="lg:col-span-2">
+                <div class="bg-white p-8 rounded-[30px] shadow-sm border border-slate-200">
+                    <div class="flex justify-between items-center mb-8">
+                        <h2 class="text-xl font-black text-blue-900 underline">Stock Iriho</h2>
+                        <button onclick="fetchProducts()" class="text-blue-600 font-bold hover:rotate-180 transition duration-500">↺ Refresh</button>
+                    </div>
+                    
+                    <div id="admin-product-list" class="space-y-4">
+                        <!-- Products will appear here dynamically -->
+                        <div class="animate-pulse text-slate-400 font-bold">Turimo gushaka stock...</div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        const API_URL = "https://sulfo-backend.onrender.com";
+
+        // 1. SOMA IBICURUZWA
+        async function fetchProducts() {
+            try {
+                const res = await fetch(`${API_URL}/products`);
+                const data = await res.json();
+                const list = document.getElementById('admin-product-list');
+                list.innerHTML = '';
+
+                data.forEach(p => {
+                    list.innerHTML += `
+                        <div class="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100 hover:border-blue-200 transition">
+                            <div class="flex items-center space-x-4">
+                                <img src="${p.img}" class="h-14 w-14 object-contain bg-white rounded-lg p-1">
+                                <div>
+                                    <p class="font-extrabold text-slate-800">${p.name}</p>
+                                    <p class="text-blue-700 font-black text-sm">${p.price.toLocaleString()} RWF</p>
+                                </div>
+                            </div>
+                            <button onclick="deleteProduct(${p.id})" class="bg-red-50 text-red-600 px-4 py-2 rounded-xl font-bold hover:bg-red-600 hover:text-white transition">SIBA</button>
+                        </div>
+                    `;
+                });
+            } catch (err) {
+                alert("Server ntiri gukora!");
+            }
+        }
+
+        // 2. ONGERAMO GISHYA
+        async function addProduct() {
+            const name = document.getElementById('p-name').value;
+            const price = document.getElementById('p-price').value;
+            const img = document.getElementById('p-img').value;
+
+            if(!name || !price || !img) return alert("Banza wuzuze byose!");
+
+            const res = await fetch(`${API_URL}/products/add`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, price, img })
+            });
+
+            const result = await res.json();
+            alert(result.message);
+            
+            // Clear inputs
+            document.getElementById('p-name').value = '';
+            document.getElementById('p-price').value = '';
+            document.getElementById('p-img').value = '';
+            
+            fetchProducts(); // Refresh list
+        }
+
+        // 3. SIBA IGICURUZWA
+        async function deleteProduct(id) {
+            if(!confirm("Uremeza ko usaka gusiba iki gicuruzwa muri Stock ya Sulfo?")) return;
+
+            const res = await fetch(`${API_URL}/products/${id}`, { method: 'DELETE' });
+            const result = await res.json();
+            alert(result.message);
+            fetchProducts();
+        }
+
+        // Load initially
+        window.onload = fetchProducts;
+    </script>
+</body>
+</html>
